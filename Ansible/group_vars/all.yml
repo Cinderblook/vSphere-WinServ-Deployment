@@ -1,0 +1,12 @@
+---
+ansible_user: administrator
+ansible_password: "Password1234"
+ansible_port: 5985
+ansible_connection: winrm
+ansible_winrm_server_cert_validation: ignore
+
+domain: "ajb2.local"
+netbios_domain: "ajb2"
+domain_admin: "administrator@{{ domain }}"
+domain_admin_password: "Password1234"
+domain_safemode_password: "Password1234"

@@ -1,0 +1,114 @@
+---
+# Create Groups for Domain
+- name: Create user group
+  ansible.windows.win_group:
+    name: Employees
+    description: Employee Group
+    state: present
+- name: Create Guest group
+  ansible.windows.win_group:
+    name: Guests
+    description: Guest group
+    state: present
+# Create OU for User locations (Staff, Guests, Admin)
+- name: Install nuget packge for OU creation
+  win_shell: install-packageprovider -name nuget -force
+- name: Install XactiveDirectory package for OU creation
+  win_psmodule:
+    name: ActiveDirectoryDSC
+    state: present
+- name: Create OU for Staff
+  win_dsc:
+    resource_name: ADOrganizationalUnit
+    name: "Staff"
+    path: dc=ajb2, dc=local
+- name: Create OU for  Admin
+  win_dsc:
+    resource_name: ADOrganizationalUnit
+    name: "Admins"
+    path: dc=ajb2, dc=local
+- name: Create OU for Guests
+  win_dsc:
+    resource_name: ADOrganizationalUnit
+    name: "Guests"
+    path: dc=ajb2, dc=local
+# Create multiple users for Domain and add to respective groups
+- name: Create Guest User
+  community.windows.win_domain_user:
+    name: Guest
+    firstname: Guest
+    surname: User
+    password: Password1234
+    state: present
+    path: ou=Guests, dc=ajb2, dc=local
+    groups: Guests
+    domain_username: ajb2\administrator
+    domain_password: Password1234
+    domain_server: ajb52-pdc
+- name: Create administrator Account
+  community.windows.win_domain_user:
+    name: AbarnesAdmin
+    firstname: Austin
+    surname: Barnes
+    password: Password1234
+    state: present
+    path: ou=Admins, dc=ajb2, dc=local
+    groups: 
+    - Employees
+    - Domain Users
+    - Domain Admins
+    - Enterprise Admins
+    domain_username: ajb2\administrator
+    domain_password: Password1234
+    domain_server: ajb52-pdc
+- name: Create Employee account John
+  community.windows.win_domain_user:
+    name: John
+    firstname: John
+    surname: Doe
+    password: Password1234
+    state: present
+    path: ou=Staff, dc=ajb2, dc=local
+    groups: 
+    - Employees
+    - Domain Users
+    domain_username: ajb2\administrator
+    domain_password: Password1234
+    domain_server: ajb52-pdc 
+- name: Create Employee account Sadie
+  community.windows.win_domain_user:
+    name: Sadie
+    firstname: Sadie
+    surname: Smith
+    password: Password1234
+    state: present
+    path: ou=Staff, dc=ajb2, dc=local
+    groups: 
+    - Employees
+    - Domain Users
+    domain_username: ajb2\administrator
+    domain_password: Password1234
+    domain_server: ajb52-pdc 
+
+# Add users to their groups
+#- name: Add Guest(s) to their groups
+#  ansible.windows.win_group_membership:
+#    name: Guests
+#    members:
+#      - ajb2\Guest
+#    state: present
+#- name: Add Admin(s) to their groups
+#  ansible.windows.win_group_membership:
+#    name: Admins
+#    members:
+#      - ajb2\AbarnesAdmin
+#    state: present
+#- name: Add Employee(s) to their groups
+#  ansible.windows.win_group_membership:
+#    name: Employees
+#    members:
+#      - ajb2\John
+#      - ajb2\Sadie
+#    state: present
+
+
