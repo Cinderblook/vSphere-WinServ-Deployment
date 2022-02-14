@@ -41,6 +41,7 @@ To complete this project, 3 steps are taken.
 -   ```git clone git@github.com:Cinderblook/Terraform-Projects-NOCLOUD.git```
   
 ## Modify Variables in the following files to fit your environment
+***I go into more detail about these variables within their respecitve Folder README.md files***
 - Packer/configs/autounattend.xml
   - *Change Administrator Credentials*
 - Packer/myvarfile.json
@@ -58,7 +59,7 @@ To complete this project, 3 steps are taken.
     - `packer init -upgrade ws2022.pkr.hcl`
 - Then apply the Packer configuration to create the Windows Server 2022 Image
     - `packer build -timestamp-ui -force -var-file=myvarfile.json ws2022.pkr.hcl`
-* This packer execute pulls the newest windows server 2022 eval .iso from microsoft populates it into the vSphere environment, in the specified datacenter/cluster/host/datastore
+* This packer execute pulls the newest windows server datacenter 2022 eval .iso from microsoft populates it into the vSphere environment, in the specified datacenter/cluster/host/datastore
 * It then runs commands to: Grab DHCP, Updates the image, Enables SSH, Enables RDP, Configures necessary firewall settings, sets passwords/usernames, & installs VMware Tools to base image
 * Additionally, it will install [Chocolatey](https://chocolatey.org/) for packages, notepad++, Edge, & 7-zip
   <br>
@@ -79,8 +80,10 @@ To complete this project, 3 steps are taken.
     - This may take awhile, once it is done, double check in vSphere all necessary Virtual Machines were created properly *(For me this took 20 minutes to fully complete)*
 
  ## Navigate to Ansible Directory
-- Run your ansible playbook `ansible-playbook winlab.yml`
-  - This should run through and detail each change 
+- Once you have allowed Terraform to finish its configuraiton:
+  - Navigate to your Ansible Directory, `cd <path-to-Ansible>`
+  - Run your ansible playbook `ansible-playbook winlab.yml`
+    - This should run through and detail each change as it plays out
 
 
 # References Used/Useful Links
