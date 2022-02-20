@@ -9,6 +9,7 @@
 - name: join domain
   win_domain_membership:
     dns_domain_name: "{{ domain }}"
+    hostname: "{{ primary_dhcp_server }}"
     domain_admin_user: "{{ domain_admin }}"
     domain_admin_password: "{{ domain_admin_password }}"
     state: domain
@@ -26,12 +27,12 @@
   
 # Use Windows Powershell to configure DHCP Service
 - name: Configure DHCP Scope
-  win_shell: Add-DhcpServerV4Scope -Name "DHCPScope" -StartRange 10.175.128.185 -EndRange 10.175.128.190 -SubnetMask 255.255.255.192
+  win_shell: Add-DhcpServerV4Scope -Name "DHCPScope" -StartRange "{{ dhcp_scope_start }}" -EndRange "{{ dhcp_scope_end }}" -SubnetMask "{{ dhcp_scope_submask }}"
 - name: Configure DHCP DNS
-  win_shell: Set-DhcpServerV4OptionValue -DnsServer 10.175.128.180 -Router 10.175.128.129
+  win_shell: Set-DhcpServerV4OptionValue -DnsServer "{{ groups['pdc'][0] }}" -Router "{{ dhcp_scope_router }}"
 - name: Configure DHCP Lease Duration
-  win_shell: Set-DhcpServerv4Scope -ScopeId 10.175.128.185 -LeaseDuration 1.00:00:00
+  win_shell: Set-DhcpServerv4Scope -ScopeId "{{ dhcp_scope_start }}" -LeaseDuration 1.00:00:00
 - name: Restart DHCP service
   win_shell: Restart-service dhcpserver
-- #name: Add DHCP as Authorized Server
-  #win_shell: Add-DhcpServerInDC -DnsName AJB52-DHCP.ajb2.local -IPAddress 10.175.128.183
+- name: Add DHCP as Authorized Server
+  win_shell: Add-DhcpServerInDC 

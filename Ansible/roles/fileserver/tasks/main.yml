@@ -9,6 +9,7 @@
 - name: join domain
   win_domain_membership:
     dns_domain_name: "{{ domain }}"
+    hostname: "{{ primary_fileshare_server }}"
     domain_admin_user: "{{ domain_admin }}"
     domain_admin_password: "{{ domain_admin_password }}"
     state: domain
@@ -50,7 +51,7 @@
     description: Sharing is Caring
     path: C:\Share\Employee\
     list: yes
-    full: Admins
+    full: Domain Admins
     read: Everyone
 - name: Add admin only share
   ansible.windows.win_share:
@@ -58,6 +59,6 @@
     description: Super Secret, professionals only
     path: C:\Share\Admin\
     list: yes
-    full: Administrators
+    full: Domain Admins
     read: Admins
     deny: Everyone

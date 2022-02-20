@@ -21,30 +21,32 @@
   win_dsc:
     resource_name: ADOrganizationalUnit
     name: "Staff"
-    path: dc=ajb2, dc=local
+    path: "dc={{ netbios_domain }}, dc={{ top_level_domain }}"
 - name: Create OU for  Admin
   win_dsc:
     resource_name: ADOrganizationalUnit
     name: "Admins"
-    path: dc=ajb2, dc=local
+    path: "dc={{ netbios_domain }}, dc={{ top_level_domain }}"
 - name: Create OU for Guests
   win_dsc:
     resource_name: ADOrganizationalUnit
     name: "Guests"
-    path: dc=ajb2, dc=local
+    path: "dc={{ netbios_domain }}, dc={{ top_level_domain }}"
 # Create multiple users for Domain and add to respective groups
 - name: Create Guest User
   community.windows.win_domain_user:
-    name: Guest
+    name: GuestUser
     firstname: Guest
     surname: User
     password: Password1234
     state: present
-    path: ou=Guests, dc=ajb2, dc=local
-    groups: Guests
-    domain_username: ajb2\administrator
-    domain_password: Password1234
-    domain_server: ajb52-pdc
+    path: "ou=Guests, dc={{ netbios_domain }}, dc={{ top_level_domain }}"
+    groups: 
+    - Guests
+    - Domain Guests
+    domain_username: "{{ domain_admin_username }}"
+    domain_password: "{{ domain_admin_password }}"
+    domain_server: "{{ primary_domain_controller }}"
 - name: Create administrator Account
   community.windows.win_domain_user:
     name: AbarnesAdmin
@@ -52,15 +54,15 @@
     surname: Barnes
     password: Password1234
     state: present
-    path: ou=Admins, dc=ajb2, dc=local
+    path: "ou=Admins, dc={{ netbios_domain }}, dc={{ top_level_domain }}"
     groups: 
     - Employees
     - Domain Users
     - Domain Admins
     - Enterprise Admins
-    domain_username: ajb2\administrator
-    domain_password: Password1234
-    domain_server: ajb52-pdc
+    domain_username: "{{ domain_admin_username }}"
+    domain_password: "{{ domain_admin_password }}"
+    domain_server: "{{ primary_domain_controller }}"
 - name: Create Employee account John
   community.windows.win_domain_user:
     name: John
@@ -68,13 +70,13 @@
     surname: Doe
     password: Password1234
     state: present
-    path: ou=Staff, dc=ajb2, dc=local
+    path: "ou=Staff, dc={{ netbios_domain }}, dc={{ top_level_domain }}"
     groups: 
     - Employees
     - Domain Users
-    domain_username: ajb2\administrator
-    domain_password: Password1234
-    domain_server: ajb52-pdc 
+    domain_username: "{{ domain_admin_username }}"
+    domain_password: "{{ domain_admin_password }}"
+    domain_server: "{{ primary_domain_controller }}"
 - name: Create Employee account Sadie
   community.windows.win_domain_user:
     name: Sadie
@@ -82,33 +84,10 @@
     surname: Smith
     password: Password1234
     state: present
-    path: ou=Staff, dc=ajb2, dc=local
+    path: "ou=Staff, dc={{ netbios_domain }}, dc={{ top_level_domain }}"
     groups: 
     - Employees
     - Domain Users
-    domain_username: ajb2\administrator
-    domain_password: Password1234
-    domain_server: ajb52-pdc 
-
-# Add users to their groups
-#- name: Add Guest(s) to their groups
-#  ansible.windows.win_group_membership:
-#    name: Guests
-#    members:
-#      - ajb2\Guest
-#    state: present
-#- name: Add Admin(s) to their groups
-#  ansible.windows.win_group_membership:
-#    name: Admins
-#    members:
-#      - ajb2\AbarnesAdmin
-#    state: present
-#- name: Add Employee(s) to their groups
-#  ansible.windows.win_group_membership:
-#    name: Employees
-#    members:
-#      - ajb2\John
-#      - ajb2\Sadie
-#    state: present
-
-
+    domain_username: "{{ domain_admin_username }}"
+    domain_password: "{{ domain_admin_password }}"
+    domain_server: "{{ primary_domain_controller }}"
