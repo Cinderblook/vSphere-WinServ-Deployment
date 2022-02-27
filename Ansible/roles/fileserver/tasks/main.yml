@@ -60,5 +60,5 @@
     path: C:\Share\Admin\
     list: yes
     full: Domain Admins
-    read: Admins
+    read: Domain Admins
     deny: Everyone
