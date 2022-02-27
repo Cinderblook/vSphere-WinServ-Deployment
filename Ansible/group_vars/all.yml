@@ -7,7 +7,9 @@ ansible_winrm_server_cert_validation: ignore
 
 domain: "ajb2.local"
 netbios_domain: "ajb2"
-domain_admin: "administrator@{{ domain }}"
+top_level_domain: "local" 
+domain_admin: "{{ ansible_user }}@{{ domain }}"
+domain_admin_username: "{{ ansible_user }}"
 domain_admin_password: "Password1234"
 domain_safemode_password: "Password1234"
 
