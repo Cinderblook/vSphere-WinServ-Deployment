@@ -1,60 +1,104 @@
-# Automating Deployment of Windows Servers 2022
-The goal of this project is to deploy a ready-to-go windows server environment. This includes a domain controller, a replica domain controller, 
-a DHCP server, and a fileserver. Additionally setting up users, groups, and OUs for the respective users within the domain.  <br>
+# Overview
+
+The goal of this project is to deploy a ready-to-go windows server environment. This includes a domain controller, a replica domain controller, a DHCP server, and a fileserver. Additionally setting up users, groups, and OUs for the respective users within the domain. <br>
 To complete this project, 3 steps are taken. 
+
 1. Use Packer to spin up a sys prepped and fully updated windows server 2022 iso for the environemnt
 2. Use Terraform to deploy 4 virtual machines into a vSphere environment
 3. Use Ansible to configure these 4 virtual machines as desired
 
-## **Prerequisites**
+## 1. Packer's Role: 
 
-  #### Linux machine w/ 
-  - [Ansible](https://www.ansible.com/)
-    - For Ubuntu:
-        - `sudo apt update`
-        - `sudo apt install software-properties-common`
-        - `sudo add-apt-repository --yes --update ppa:ansible/ansible`
-        - `sudo apt install ansible`
-        - > Verify Ansible Install with `ansible`
-  - [Terraform](https://www.terraform.io/)
-    - `sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl`
-    - `curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -`
-    - `sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"`
-    - `sudo apt-get update && sudo apt-get install terraform`
-    - > Verify Terraform Insall with `terraform -help`
-  - [Packer](https://www.packer.io/)
-    - `curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -`
-    - `sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"`
-    - `sudo apt-get update && sudo apt-get install packer`
-    - > Verify Packer Install with `packer`
-  - [GitHub](https://git-scm.com/download/linux)
-    - `sudo apt-get install git`
+Create a Windows Server 2022 .iso that is updated and has VMTools installed by default using [Packer](https://www.packer.io/). In this solution, it will be geared to usage with vSphere, a VMware product.
 
-   #### Code Interpreter 
-  - [Visual-Studio-Code](https://code.visualstudio.com/)
-   #### vSphere Environment Setup
-   - [vSphere](https://www.vmware.com/products/vsphere.html)
-    - This project is using vSphere version 7.0.0
+**First: Packer uses `autounattend.xml` and `sysprep-autounattend.xml` to automate Windows Settings**
+  * It pulls Windows Server 2022 Datacenter Eval Edition (Desktop Experience) from Microsoft's site
+  * Installs & configure OpenSSH Client & Server for remote connection
+  * Installs VMware tools from ISO provided from the build ESX server
+
+**Packer Provisioner Steps**
+* Updating OS via Windows Update
+* Doing some OS adjustments
+  * Set Windows telemetry settings to minimum
+  * Show file extentions by default
+  * Install [Chocolatey](https://chocolatey.org/) - a Windows package manager
+    * Install Microsoft Edge (Chromium)
+    * Install Win32-OpenSSH-Server
+    * Install PowerShell Core
+    * Install 7-Zip
+    * Install Notepad++
+  * Enable Powershell-Core (`pwsh`) to be the default SSHD shell
+* Cleanup tasks
+* Remove CDROM drives from VM template (otherwise there would be 2)
+
+## 2. Terraform's Role:
+Main role: Deploy the Virtual Machines
+-   Setup the four Windows Servers (Primary Domain Controller, Replica Domain Controller, DHCP, Fileshare)
+    - Using the vSphere provider:
+        - Assign appropriate resources to each machine 
+- Once prepared with appropriate values and the networking is in place: 
+    - Navigate to the Terraform directory and run these commands
+    - `terraform init` Pull proper Terraform providers and modules used
+    - `terraform validate` This will return whether the configuration is valid or not
+    - `terraform apply` ... `yes` Actually apply the configuration
+## Terraform Variable files 
+- *variables.tf*
+    - Declare variables that will be used with the Terraform configuration
+- *terraform.tfvars*
+    - Assign variables that will be used with the Terraform configuration
+
+## 3. Ansible's Role:
+Main role: Configure the deployed Virtual Machines.
+-   Setup Windows Server Feature: Domain
+    - Primary Domain Controller 
+    - Replica Domain Controller
+    - Auto-Join the Virutal Machines to the respective Domain created
+    - Create a few users and groups within Active Directory
+-   Setup Windows Ssrver Feature: DHCP 
+    - Setup DHCP Scope
+    - Authorize it to the Domain.
+-   Setup Windows Server Feature: File Sharing
+    - Create two shares
+        - An employee share and administrator share. These shares are assigned group permissions.
+-   Common Configurations
+    - Enable RDP and allow it through the firewall on all windows servers created
+## Ansible Variable files 
+- *inventory.yml*
+    - Modify hosts associated with the playbook. Assign the IP addressing.
+- *winlab.yml*
+    - Associate 'roles' to the hosts identified in the inventory file. 
+    - These 'roles' are folders within the directory containing a set of code to configure per host
+- *ansible.cfg*
+    - Tells ansible variable information. In this scenario, identifies to use inventory.yml file.
+- *./group_vars/all.yml*
+    - Contains specific variable information used within the ./roles/* Ansible code.
+
+# Prerequisites
+* Linux machine with the following
+  * Ansible
+    * `sudo apt update`
+    * `sudo apt install software-properties-common`
+    * `sudo add-apt-repository --yes --update ppa:ansible/ansible`
+    * `sudo apt install ansible`
+  * Terraform
+    * `sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl`
+    * `curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -`
+    * `sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"`
+    * `sudo apt-get update && sudo apt-get install terraform`
+  * Packer
+    * `curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -`
+    * `sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"`
+    * `sudo apt-get update && sudo apt-get install packer`
+  * Git
+    * `sudo apt-get install git`
+* A Code Interprester
+  * I recommend [Visual-Studio-Code](https://code.visualstudio.com/)
+* vSphere Lab Environment
+  * [vSphere](https://www.vmware.com/products/vsphere.html) --- *Note: This project is using vSphere version 7.0.0*
   <br>
-## After all above criteria have been met
-#### Ensure to Clone git repository to local linux machine
--   ```git clone git@github.com:Cinderblook/Terraform-Projects-NOCLOUD.git```
-  
-## Modify Variables in the following files to fit your environment
-***I go into more detail about these variables within their respecitve Folder README.md files***
-- Packer/configs/autounattend.xml
-  - *Change Administrator Credentials*
-- Packer/myvarfile.json
-  - *Change to personal vSphere Data & Credentials*
-- Packer/ws2022.pkr.hcl
-  - *Cross check variables, alter datastore locations*
-- Terraform/terraform.tfvars
-  - *Use own custom Terraform variables, also vSphere Data & Credentials stored here*
-- Ansible/group_vars/all.yaml
-- Ansible/inventory.yml
-- Ansible/winlab.yml
-  <br>  
- ## Navigate to Packer Directory
+
+# Packer
+## Navigate to Packer Directory
 - First setup Packer environment
     - `packer init -upgrade ws2022.pkr.hcl`
 - Then apply the Packer configuration to create the Windows Server 2022 Image
@@ -66,8 +110,8 @@ To complete this project, 3 steps are taken.
  ## After Packer Finishes
 ###### *Roughly an hour depending on processing and internet speed*
 - Go into your vSphere and turn the resulting VM into a Template
-  - Ensure this mimics the variables you have set in the terraform.tfvars file
-
+  - Ensure this mimics the variables you have set in the terraform.tfvars file. This will be our next step.
+# Terraform
  ## Navigate to Terraform Directory
 - Setup Terraform Environemnt
   - `terraform init`
@@ -79,6 +123,7 @@ To complete this project, 3 steps are taken.
   - `terraform apply` ... `yes`
     - This may take awhile, once it is done, double check in vSphere all necessary Virtual Machines were created properly *(For me this took 20 minutes to fully complete)*
 
+# Ansible
  ## Navigate to Ansible Directory
 - Once you have allowed Terraform to finish its configuraiton:
   - Navigate to your Ansible Directory, `cd <path-to-Ansible>`
@@ -96,3 +141,4 @@ To complete this project, 3 steps are taken.
   - [Windows-Modules](https://galaxy.ansible.com/ansible/windows?extIdCarryOver=true&sc_cid=701f2000001OH7YAAW)
 - Terraform [Documentation](https://www.terraform.io/docs)
 - Packer [Documentation](https://www.packer.io/docs)
+
